@@ -31,6 +31,22 @@ ROOT_UCT_SCORE = 10_000
 
 
 class MCTSNode(BaseModel):
+    """
+    Represents a node in the Monte Carlo Tree Search (MCTS) algorithm.
+
+    Attributes:
+        answer (str): The answer associated with the node.
+        parent (MCTSNode | None): The parent node of the current node.
+        children (list[MCTSNode]): The list of child nodes.
+        visits (int): The number of times the node has been visited.
+        Q (float): The Q value of the node.
+        reward_samples (list[int]): The list of reward samples for the node.
+
+    Methods:
+        add_child(child_node: MCTSNode): Adds a child node to the current node.
+        add_reward(reward: int): Adds a reward sample to the node and updates the Q value.
+    """
+
     answer: str
     parent: MCTSNode | None = None
     children: list[MCTSNode] = []
@@ -39,12 +55,24 @@ class MCTSNode(BaseModel):
     reward_samples: list[int] = []
 
     def add_child(self, child_node: MCTSNode):
+        """
+        Adds a child node to the current node.
+
+        Args:
+            child_node (MCTSNode): The child node to be added.
+        """
         self.children.append(child_node)
 
     def __repr__(self):
         return f"MCTSNode(answer={self.answer}, Q={self.Q:.2f}, visits={self.visits})"
 
     def add_reward(self, reward: int):
+        """
+        Adds a reward sample to the node and updates the Q value.
+
+        Args:
+            reward (int): The reward to be added.
+        """
         self.reward_samples.append(reward)
         avg_reward = np.mean(self.reward_samples)
         min_reward = np.min(self.reward_samples)
@@ -54,17 +82,66 @@ class MCTSNode(BaseModel):
 
 
 class SelectionPolicy(Enum):
+    """
+    Enumerates the selection policies for choosing a node in the MCTS algorithm.
+
+    Attributes:
+        GREEDY (int): Greedy selection policy.
+        IMPORTANCE_SAMPLING (int): Importance sampling selection policy.
+        PAIRWISE_IMPORTANCE_SAMPLING (int): Pairwise importance sampling selection policy.
+    """
     GREEDY = 1
     IMPORTANCE_SAMPLING = 2
     PAIRWISE_IMPORTANCE_SAMPLING = 3
 
 
 class InitializeStrategy(Enum):
+    """
+    Enumerates the initialization strategies for the MCTS algorithm.
+
+    Attributes:
+        ZERO_SHOT (int): Zero-shot initialization strategy.
+        DUMMY_ANSWER (int): Dummy answer initialization strategy.
+    """
     ZERO_SHOT = 1
     DUMMY_ANSWER = 2
 
 
 class MCTSr(BaseModel):
+    """
+    Implements the MCTS + Self-Refine algorithm.
+
+    Attributes:
+        problem (str): The problem to be solved.
+        max_rollouts (int): The maximum number of rollouts in the MCTS algorithm.
+        exploration_constant (float): The exploration constant for UCT calculation.
+        max_children (int): The maximum number of children for each node.
+        epsilon (float): A small value to avoid division by zero in UCT calculation.
+        reward_limit (int): The reward limit for penalizing excessive rewards.
+        excess_reward_penalty (int): The penalty for exceeding the reward limit.
+        selection_policy (SelectionPolicy): The selection policy for choosing a node.
+        initialize_strategy (InitializeStrategy): The initialization strategy for the MCTS algorithm.
+        root (MCTSNode): The root node of the MCTS tree.
+        critiques (list[str]): The list of critiques received during self-refinement.
+        refinements (list[str]): The list of refined answers during self-refinement.
+        rewards (list[float]): The list of rewards obtained during evaluation.
+        selected_nodes (list[MCTSNode]): The list of selected nodes during the MCTS algorithm.
+
+    Methods:
+        self_refine(node: MCTSNode) -> MCTSNode: Performs self-refinement on a node and returns the refined node.
+        _evaluate_answer(node: MCTSNode) -> int: Evaluates the quality of an answer and returns the reward.
+        self_evaluate(node: MCTSNode): Evaluates the quality of an answer and updates the node's reward.
+        backpropagate(node: MCTSNode): Backpropagates the rewards from a node to its ancestors.
+        uct(node: MCTSNode): Calculates the UCT value for a node.
+        is_fully_expanded(node: MCTSNode): Checks if a node is fully expanded.
+        select_node(): Selects a non-fully expanded node with the highest UCT value.
+        zero_shot() -> str: Generates a zero-shot answer.
+        initialize(): Initializes the MCTS algorithm.
+        run(): Runs the MCTS algorithm.
+        get_best_answer(): Returns the best answer found by the MCTS algorithm.
+        print(): Prints the MCTS tree.
+    """
+
     problem: str
     max_rollouts: int
     exploration_constant: float = 1.0
@@ -84,13 +161,37 @@ class MCTSr(BaseModel):
     selected_nodes: list[MCTSNode] = []
 
     def self_refine(self, node: MCTSNode) -> MCTSNode:
+        """
+        Performs self-refinement on a node and returns the refined node.
+
+        Args:
+            node (MCTSNode): The node to be refined.
+
+        Returns:
+            MCTSNode: The refined node.
+        """
         raise NotImplementedError()
 
     def _evaluate_answer(self, node: MCTSNode) -> int:
+        """
+        Evaluates the quality of an answer and returns the reward.
+
+        Args:
+            node (MCTSNode): The node containing the answer to be evaluated.
+
+        Returns:
+            int: The reward obtained for the answer.
+        """
         raise NotImplementedError()
 
     def self_evaluate(self, node: MCTSNode):
-        """Evaluate the quality of the answer. Sample `num_samples` times and average the results."""
+        """
+        Evaluates the quality of an answer and updates the node's reward.
+        Sample `num_samples` times and average the results.
+
+        Args:
+            node (MCTSNode): The node to be evaluated.
+        """
         reward = self._evaluate_answer(node)
 
         if reward > self.reward_limit:
@@ -99,6 +200,12 @@ class MCTSr(BaseModel):
         node.add_reward(reward)
 
     def backpropagate(self, node: MCTSNode):
+        """
+        Backpropagates the rewards from a node to its ancestors.
+
+        Args:
+            node (MCTSNode): The node to start the backpropagation from.
+        """
         parent = node.parent
         while parent:
             best_child_Q = max(child.Q for child in parent.children)
@@ -107,6 +214,15 @@ class MCTSr(BaseModel):
             parent = parent.parent
 
     def uct(self, node: MCTSNode):
+        """
+        Calculates the UCT value for a node.
+
+        Args:
+            node (MCTSNode): The node to calculate the UCT value for.
+
+        Returns:
+            float: The UCT value of the node.
+        """
         if not node.parent:
             # Using an arbitrarily high UCT score for the root node.
             # helps to prioritize breadth.
@@ -117,16 +233,33 @@ class MCTSr(BaseModel):
         )
 
     def is_fully_expanded(self, node: MCTSNode):
+        """
+        Checks if a node is fully expanded.
+
+        A node is fully expanded if either:
+        1. It has reached the max number of children
+        2. Any of its children have a Q value greater than its own
+
+        Args:
+            node (MCTSNode): The node to check.
+
+        Returns:
+            bool: True if the node is fully expanded, False otherwise.
+        """
         return len(node.children) >= self.max_children or any(
             child.Q > node.Q for child in node.children
         )
 
     def select_node(self):
-        """Select a non-fully expanded node with the highest UCT value.
+        """
+        Selects a non-fully expanded node with the highest UCT value.
 
         A node is fully expanded if either:
         1. It has reached the max number of children
         2. Any of its children have a Q value greater than its own
+
+        Returns:
+            MCTSNode: The selected node.
         """
         candidates: list[MCTSNode] = []
         to_consider = deque([self.root])
@@ -170,11 +303,18 @@ class MCTSr(BaseModel):
             raise ValueError(f"Invalid selection policy: {self.selection_policy}")
 
     def zero_shot(self) -> str:
-        """Generate a zero-shot answer."""
+        """
+        Generates a zero-shot answer.
+
+        Returns:
+            str: The zero-shot answer.
+        """
         raise NotImplementedError()
 
     def initialize(self):
-        """Generate a zero-shot answer."""
+        """
+        Initializes the MCTS algorithm. Generate a zero-shot answer.
+        """
         if self.initialize_strategy == InitializeStrategy.ZERO_SHOT:
             self.root = MCTSNode(answer=self.zero_shot())
         elif self.initialize_strategy == InitializeStrategy.DUMMY_ANSWER:
@@ -183,6 +323,12 @@ class MCTSr(BaseModel):
             raise ValueError(f"Invalid initialize strategy: {self.initialize_strategy}")
 
     def run(self):
+        """
+        Runs the MCTS algorithm.
+
+        Returns:
+            str: The best answer found by the MCTS algorithm.
+        """
         self.initialize()
         for _ in tqdm.tqdm(range(self.max_rollouts)):
             node = self.select_node()
@@ -196,6 +342,12 @@ class MCTSr(BaseModel):
 
     def get_best_answer(self):
         from collections import deque
+        """
+        Returns the best answer found by the MCTS algorithm.
+
+        Returns:
+            str: The best answer.
+        """
 
         to_visit = deque([self.root])
         best_node = self.root
@@ -209,11 +361,29 @@ class MCTSr(BaseModel):
         return best_node.answer
 
     def print(self):
+        """
+        Prints the MCTS tree.
+        """
         print_tree(self.root)
 
 
 class MCTSrLlama38B(MCTSr):
+    """
+    Implements the MCTS + Self-Refine algorithm using the LLaMa-3 8B model.
+
+    Methods:
+        zero_shot() -> str: Generates a zero-shot answer using the LLaMa-3 8B model.
+        self_refine(node: MCTSNode) -> MCTSNode: Performs self-refinement using the LLaMa-3 8B model.
+        _evaluate_answer(node: MCTSNode) -> int: Evaluates the quality of an answer using the LLaMa-3 8B model.
+    """
+
     def zero_shot(self) -> str:
+        """
+        Generates a zero-shot answer using the LLaMa-3 8B model.
+
+        Returns:
+            str: The zero-shot answer.
+        """
         response = openai_chat_completion(
             messages=[
                 {
@@ -233,6 +403,15 @@ class MCTSrLlama38B(MCTSr):
         return response.choices[0].message.content
 
     def self_refine(self, node: MCTSNode) -> MCTSNode:
+        """
+        Performs self-refinement on a node using the LLaMa-3 8B model and returns the refined node.
+
+        Args:
+            node (MCTSNode): The node to be refined.
+
+        Returns:
+            MCTSNode: The refined node.
+        """
         critique_response = openai_chat_completion(
             messages=[
                 {
@@ -285,6 +464,15 @@ class MCTSrLlama38B(MCTSr):
         return MCTSNode(answer=refined_answer, parent=node)
 
     def _evaluate_answer(self, node: MCTSNode) -> int:
+        """
+        Evaluates the quality of an answer using the LLaMa-3 8B model and returns the reward.
+
+        Args:
+            node (MCTSNode): The node containing the answer to be evaluated.
+
+        Returns:
+            int: The reward obtained for the answer.
+        """
         messages = [
             {
                 "role": "system",
@@ -328,7 +516,22 @@ class MCTSrLlama38B(MCTSr):
 
 
 class MCTSrGPT4o(MCTSr):
+    """
+    Implements the MCTS + Self-Refine algorithm using the GPT-4o model.
+
+    Methods:
+        zero_shot() -> str: Generates a zero-shot answer using the GPT-4o model.
+        self_refine(node: MCTSNode) -> MCTSNode: Performs self-refinement using the GPT-4o model.
+        _evaluate_answer(node: MCTSNode) -> int: Evaluates the quality of an answer using the GPT-4o model.
+    """
+
     def zero_shot(self) -> str:
+        """
+        Generates a zero-shot answer using the GPT-4o model.
+
+        Returns:
+            str: The zero-shot answer.
+        """
         response = openai_chat_completion(
             messages=[
                 {
@@ -346,7 +549,17 @@ class MCTSrGPT4o(MCTSr):
         assert response.choices[0].message.content is not None
         return response.choices[0].message.content
 
+
     def self_refine(self, node: MCTSNode) -> MCTSNode:
+        """
+        Performs self-refinement on a node using the GPT-4o model and returns the refined node.
+
+        Args:
+            node (MCTSNode): The node to be refined.
+
+        Returns:
+            MCTSNode: The refined node.
+        """
         critique_response = openai_chat_completion(
             messages=[
                 {
@@ -402,6 +615,15 @@ class MCTSrGPT4o(MCTSr):
         )
 
     def _evaluate_answer(self, node: MCTSNode) -> int:
+        """
+        Evaluates the quality of an answer using the GPT-4o model and returns the reward.
+
+        Args:
+            node (MCTSNode): The node containing the answer to be evaluated.
+
+        Returns:
+            int: The reward obtained for the answer.
+        """
         messages = [
             {
                 "role": "system",
@@ -444,6 +666,13 @@ class MCTSrGPT4o(MCTSr):
 
 
 def print_tree(node: MCTSNode | None, level: int = 0):
+    """
+    Recursively prints the tree structure starting from the given node.
+
+    Args:
+        node (MCTSNode | None): The starting node of the tree.
+        level (int): The current level of the tree (used for indentation).
+    """
     if node is None:
         return
     indent = " " * level * 2
@@ -452,3 +681,4 @@ def print_tree(node: MCTSNode | None, level: int = 0):
         print(indent + line)
     for child in node.children:
         print_tree(child, level + 1)
+
