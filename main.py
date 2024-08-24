@@ -1,9 +1,21 @@
 from src.mcts_llm.mctsr import MCTSrGPT4o, print_tree
 
-base_question = """You are a VERY SMART AI that's very good at solving puzzles. Below is a list of input and output pairs with a pattern. Identify the patterns (transformation rules) that map the input to the output.
-Hint: imagine the problem as a grid. Each number represents a different color. Imagine it visually and identify the pattern. Be very careful with the shape of the grids and identify the patterns for the inputs and outputs."
-The pattern should be consistent to all the examples so if you apply it to the example inputs, you get the corresponding example outputs."
-The result should be the output for the test input case.
+base_question = """You are an AI expert at pattern recognition and puzzle-solving. Analyze the following input-output pairs to identify the transformation rules:
+
+1. Visualize each input and output as a grid, where numbers represent different colors.
+2. Pay close attention to the shape, dimensions, and color patterns in both input and output grids.
+3. Identify a consistent transformation rule that applies to all example pairs.
+4. The rule should be generalizable to any input of similar structure.
+
+Your task:
+1. Identify the pattern(s) that map the input to the output.
+2. Formulate a clear, concise TRANSFORMATION RULE as a string.
+3. Ensure your rule can be applied to any valid input to produce the correct output.
+
+Remember:
+- Be precise in your observations.
+- Consider both spatial and numerical transformations.
+- Your rule should work for all provided examples and be applicable to new inputs.
 """
 
 question = base_question + """
@@ -140,3 +152,4 @@ print(mctsr.get_best_answer())
 print_tree(mctsr.root)
 
 mctsr.run()
+print(mctsr.get_best_answer())
