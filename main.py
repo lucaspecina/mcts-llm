@@ -83,19 +83,9 @@ Example 3: Output
 [2, 2, 0],
 [0, 2, 0],]
 
-Test
-[
-[1, 1, 1]
-[0, 1, 0]
-[0, 1, 0]
-[1, 1, 1]
-[0, 1, 0]
-[0, 1, 0]]
-
-Your Response:
 """
 
-
+# 0520fde7
 question = base_question + """
 Training Examples
 Example 1: Input
@@ -134,19 +124,14 @@ Example 3: Output
 [2, 0, 0],
 [0, 0, 2],]
 
-Test
-[
-[1, 0, 1, 5, 1, 0, 1]
-[0, 1, 0, 5, 1, 0, 1]
-[1, 0, 1, 5, 0, 1, 0]]
-
-Your Response:
 """
 
 mctsr = MCTSrGPT4o(
-    problem = question,
-    max_rollouts = 4
-    )
+    problem=question,
+    max_rollouts=20,
+    max_rollout_depth=10,
+    max_rollout_depth_per_node=10,
+)
 print(mctsr)
 print(mctsr.get_best_answer())
 print_tree(mctsr.root)

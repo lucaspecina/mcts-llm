@@ -337,6 +337,7 @@ class MCTSr(BaseModel):
             node.add_child(child)
             self.self_evaluate(child)
             self.backpropagate(child)
+            print(child)
 
         return self.get_best_answer()
 
