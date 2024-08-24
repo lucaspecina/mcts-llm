@@ -1,12 +1,12 @@
 from src.mcts_llm.mctsr import MCTSrGPT4o, print_tree
 
-# question = "A robe takes 2 bolts of blue fiber and half that much white fiber.  How many bolts in total does it take?"
-question = """You are a VERY SMART AI called llama3 who is very good at solving puzzles. Below is a list of input and output pairs with a pattern." 
-Identify the patterns."
+base_question = """You are a VERY SMART AI that's very good at solving puzzles. Below is a list of input and output pairs with a pattern. Identify the patterns (transformation rules) that map the input to the output.
 Hint: imagine the problem as a grid. Each number represents a different color. Imagine it visually and identify the pattern. Be very careful with the shape of the grids and identify the patterns for the inputs and outputs."
 The pattern should be consistent to all the examples so if you apply it to the example inputs, you get the corresponding example outputs."
 The result should be the output for the test input case.
+"""
 
+question = base_question + """
 Training Examples
 Example 1: Input
 [
@@ -83,12 +83,8 @@ Test
 Your Response:
 """
 
-question = """You are a VERY SMART AI called llama3 who is very good at solving puzzles. Below is a list of input and output pairs with a pattern." 
-Identify the patterns."
-Hint: imagine the problem as a grid. Each number represents a different color. Imagine it visually and identify the pattern. Be very careful with the shape of the grids and identify the patterns for the inputs and outputs."
-The pattern should be consistent to all the examples so if you apply it to the example inputs, you get the corresponding example outputs."
-The result should be the output for the test input case.
 
+question = base_question + """
 Training Examples
 Example 1: Input
 [
@@ -134,6 +130,7 @@ Test
 
 Your Response:
 """
+
 mctsr = MCTSrGPT4o(
     problem = question,
     max_rollouts = 4
