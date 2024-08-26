@@ -140,6 +140,7 @@ class MCTSr(BaseModel):
 
     problem: str
     max_rollouts: int
+    max_tokens: int = 1000
     exploration_constant: float = 1.0
     max_children: int = 2
     epsilon: float = 1e-10
@@ -394,7 +395,7 @@ class MCTSrLlama318B(MCTSr):
             ],
             model=llama3_1_8b_prompt_config.model,
             base_url=llama3_1_8b_prompt_config.base_url,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
         )
         assert response.choices[0].message.content is not None
         return response.choices[0].message.content
@@ -427,7 +428,7 @@ class MCTSrLlama318B(MCTSr):
             ],
             model=llama3_1_8b_prompt_config.model,
             base_url=llama3_1_8b_prompt_config.base_url,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
         )
         critique = critique_response.choices[0].message.content
         assert critique is not None
@@ -452,7 +453,7 @@ class MCTSrLlama318B(MCTSr):
             ],
             model=llama3_1_8b_prompt_config.model,
             base_url=llama3_1_8b_prompt_config.base_url,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
         )
         refined_answer = refined_answer_response.choices[0].message.content
         assert refined_answer is not None
@@ -491,7 +492,7 @@ class MCTSrLlama318B(MCTSr):
                     messages=messages,
                     model=llama3_1_8b_prompt_config.model,
                     base_url=llama3_1_8b_prompt_config.base_url,
-                    max_tokens=1000,
+                    max_tokens=self.max_tokens,
                 )
                 assert response.choices[0].message.content is not None
                 return int(response.choices[0].message.content)
@@ -541,7 +542,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
         )
         assert response.choices[0].message.content is not None
         return response.choices[0].message.content
@@ -574,7 +575,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
         )
         critique = critique_response.choices[0].message.content
         assert critique is not None
@@ -598,7 +599,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
             response_format={"type": "json_object"},
         )
         refined_answer = RefineResponse.model_validate_json(
@@ -641,7 +642,7 @@ class MCTSrGPT4o(MCTSr):
                 response = openai_chat_completion(
                     messages=messages,
                     model=gpt_4o_prompt_config.model,
-                    max_tokens=1000,
+                    max_tokens=self.max_tokens,
                 )
                 assert response.choices[0].message.content is not None
                 return int(response.choices[0].message.content)

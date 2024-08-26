@@ -126,21 +126,20 @@ Example 3: Output
 
 """
 
-model = 'llama3.1'
+# model = 'llama3.1'
+model = 'gpt4o'
 
 if model == 'gpt4o':
     mctsr = MCTSrGPT4o(
         problem=question,
         max_rollouts=20,
-        max_rollout_depth=10,
-        max_rollout_depth_per_node=10,
+        max_tokens=1000
     )
 elif model == 'llama3.1':
     mctsr = MCTSrLlama318B(
         problem=question,
         max_rollouts=20,
-        max_rollout_depth=10,
-        max_rollout_depth_per_node=10,
+        max_tokens=1000
     )
 else:
     raise ValueError(f"Model {model} not supported")
