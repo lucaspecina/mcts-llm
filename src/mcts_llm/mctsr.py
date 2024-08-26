@@ -20,11 +20,7 @@ from enum import Enum
 from .llm import openai_chat_completion
 from pydantic import BaseModel
 import tqdm
-from .prompt_configs import (
-    llama_3_8b_prompt_config,
-    gpt_4o_prompt_config,
-    RefineResponse,
-)
+from .prompt_configs import llama_3_8b_prompt_config, llama3_1_8b_prompt_config, gpt_4o_prompt_config, RefineResponse
 import numpy as np
 
 ROOT_UCT_SCORE = 10_000
@@ -368,19 +364,19 @@ class MCTSr(BaseModel):
         print_tree(self.root)
 
 
-class MCTSrLlama38B(MCTSr):
+class MCTSrLlama318B(MCTSr):
     """
-    Implements the MCTS + Self-Refine algorithm using the LLaMa-3 8B model.
+    Implements the MCTS + Self-Refine algorithm using the LLaMa-3.1 8B model.
 
     Methods:
-        zero_shot() -> str: Generates a zero-shot answer using the LLaMa-3 8B model.
-        self_refine(node: MCTSNode) -> MCTSNode: Performs self-refinement using the LLaMa-3 8B model.
-        _evaluate_answer(node: MCTSNode) -> int: Evaluates the quality of an answer using the LLaMa-3 8B model.
+        zero_shot() -> str: Generates a zero-shot answer using the LLaMa-3.1 8B model.
+        self_refine(node: MCTSNode) -> MCTSNode: Performs self-refinement using the LLaMa-3.1 8B model.
+        _evaluate_answer(node: MCTSNode) -> int: Evaluates the quality of an answer using the LLaMa-3.1 8B model.
     """
 
     def zero_shot(self) -> str:
         """
-        Generates a zero-shot answer using the LLaMa-3 8B model.
+        Generates a zero-shot answer using the LLaMa-3.1 8B model.
 
         Returns:
             str: The zero-shot answer.
@@ -396,16 +392,16 @@ class MCTSrLlama38B(MCTSr):
                     "content": f"<problem>\n{self.problem}\n</problem>",
                 },
             ],
-            model=llama_3_8b_prompt_config.model,
-            base_url=llama_3_8b_prompt_config.base_url,
-            max_tokens=4000,
+            model=llama3_1_8b_prompt_config.model,
+            base_url=llama3_1_8b_prompt_config.base_url,
+            max_tokens=1000,
         )
         assert response.choices[0].message.content is not None
         return response.choices[0].message.content
 
     def self_refine(self, node: MCTSNode) -> MCTSNode:
         """
-        Performs self-refinement on a node using the LLaMa-3 8B model and returns the refined node.
+        Performs self-refinement on a node using the LLaMa-3.1 8B model and returns the refined node.
 
         Args:
             node (MCTSNode): The node to be refined.
@@ -417,7 +413,7 @@ class MCTSrLlama38B(MCTSr):
             messages=[
                 {
                     "role": "system",
-                    "content": llama_3_8b_prompt_config.critic_system_prompt,
+                    "content": llama3_1_8b_prompt_config.critic_system_prompt,
                 },
                 {
                     "role": "user",
@@ -429,9 +425,9 @@ class MCTSrLlama38B(MCTSr):
                     ),
                 },
             ],
-            model=llama_3_8b_prompt_config.model,
-            base_url=llama_3_8b_prompt_config.base_url,
-            max_tokens=4000,
+            model=llama3_1_8b_prompt_config.model,
+            base_url=llama3_1_8b_prompt_config.base_url,
+            max_tokens=1000,
         )
         critique = critique_response.choices[0].message.content
         assert critique is not None
@@ -441,7 +437,7 @@ class MCTSrLlama38B(MCTSr):
             messages=[
                 {
                     "role": "system",
-                    "content": llama_3_8b_prompt_config.refine_system_prompt,
+                    "content": llama3_1_8b_prompt_config.refine_system_prompt,
                 },
                 {
                     "role": "user",
@@ -454,9 +450,9 @@ class MCTSrLlama38B(MCTSr):
                     ),
                 },
             ],
-            model=llama_3_8b_prompt_config.model,
-            base_url=llama_3_8b_prompt_config.base_url,
-            max_tokens=4000,
+            model=llama3_1_8b_prompt_config.model,
+            base_url=llama3_1_8b_prompt_config.base_url,
+            max_tokens=1000,
         )
         refined_answer = refined_answer_response.choices[0].message.content
         assert refined_answer is not None
@@ -466,7 +462,7 @@ class MCTSrLlama38B(MCTSr):
 
     def _evaluate_answer(self, node: MCTSNode) -> int:
         """
-        Evaluates the quality of an answer using the LLaMa-3 8B model and returns the reward.
+        Evaluates the quality of an answer using the LLaMa-3.1 8B model and returns the reward.
 
         Args:
             node (MCTSNode): The node containing the answer to be evaluated.
@@ -477,7 +473,7 @@ class MCTSrLlama38B(MCTSr):
         messages = [
             {
                 "role": "system",
-                "content": llama_3_8b_prompt_config.evaluate_system_prompt,
+                "content": llama3_1_8b_prompt_config.evaluate_system_prompt,
             },
             {
                 "role": "user",
@@ -493,9 +489,9 @@ class MCTSrLlama38B(MCTSr):
             try:
                 response = openai_chat_completion(
                     messages=messages,
-                    model=llama_3_8b_prompt_config.model,
-                    base_url=llama_3_8b_prompt_config.base_url,
-                    max_tokens=4000,
+                    model=llama3_1_8b_prompt_config.model,
+                    base_url=llama3_1_8b_prompt_config.base_url,
+                    max_tokens=1000,
                 )
                 assert response.choices[0].message.content is not None
                 return int(response.choices[0].message.content)
@@ -545,7 +541,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=4000,
+            max_tokens=1000,
         )
         assert response.choices[0].message.content is not None
         return response.choices[0].message.content
@@ -578,7 +574,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=4000,
+            max_tokens=1000,
         )
         critique = critique_response.choices[0].message.content
         assert critique is not None
@@ -602,7 +598,7 @@ class MCTSrGPT4o(MCTSr):
                 },
             ],
             model=gpt_4o_prompt_config.model,
-            max_tokens=4000,
+            max_tokens=1000,
             response_format={"type": "json_object"},
         )
         refined_answer = RefineResponse.model_validate_json(
@@ -645,7 +641,7 @@ class MCTSrGPT4o(MCTSr):
                 response = openai_chat_completion(
                     messages=messages,
                     model=gpt_4o_prompt_config.model,
-                    max_tokens=4000,
+                    max_tokens=1000,
                 )
                 assert response.choices[0].message.content is not None
                 return int(response.choices[0].message.content)

@@ -30,7 +30,8 @@ Refine the answer based on the critique. Your refined answer should be a direct 
 )
 
 llama3_1_8b_prompt_config = PromptConfig(
-    model="accounts/fireworks/models/llama-v3-8b-instruct",
+    base_url="http://localhost:11434/v1",
+    model="llama3.1",
     critic_system_prompt="Provide a detailed and constructive critique to improve the answer. "
     "Highlight specific areas that need refinement or correction.",
     refine_system_prompt="""# Instruction

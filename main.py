@@ -1,4 +1,4 @@
-from src.mcts_llm.mctsr import MCTSrGPT4o, print_tree
+from src.mcts_llm.mctsr import MCTSrGPT4o, print_tree, MCTSrLlama318B
 
 base_question = """You are an AI expert at pattern recognition and puzzle-solving. Analyze the following input-output pairs to identify the transformation rules:
 
@@ -126,12 +126,25 @@ Example 3: Output
 
 """
 
-mctsr = MCTSrGPT4o(
-    problem=question,
-    max_rollouts=20,
-    max_rollout_depth=10,
-    max_rollout_depth_per_node=10,
-)
+model = 'llama3.1'
+
+if model == 'gpt4o':
+    mctsr = MCTSrGPT4o(
+        problem=question,
+        max_rollouts=20,
+        max_rollout_depth=10,
+        max_rollout_depth_per_node=10,
+    )
+elif model == 'llama3.1':
+    mctsr = MCTSrLlama318B(
+        problem=question,
+        max_rollouts=20,
+        max_rollout_depth=10,
+        max_rollout_depth_per_node=10,
+    )
+else:
+    raise ValueError(f"Model {model} not supported")
+
 print(mctsr)
 print(mctsr.get_best_answer())
 print_tree(mctsr.root)
