@@ -126,27 +126,30 @@ Example 3: Output
 
 """
 
-# model = 'llama3.1'
-model = 'gpt4o'
+model = 'llama3.1'
+# model = 'gpt4o'
 
 if model == 'gpt4o':
     mctsr = MCTSrGPT4o(
         problem=question,
         max_rollouts=20,
-        max_tokens=1000
+        max_tokens=1000,
+        max_children=10,
     )
 elif model == 'llama3.1':
     mctsr = MCTSrLlama318B(
         problem=question,
         max_rollouts=20,
-        max_tokens=1000
+        max_tokens=1000,
+        max_children=10,
     )
 else:
     raise ValueError(f"Model {model} not supported")
 
 print(mctsr)
-print(mctsr.get_best_answer())
+# print(mctsr.get_best_answer())
 print_tree(mctsr.root)
 
 mctsr.run()
+print("FINAL ANSWER:")
 print(mctsr.get_best_answer())

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 
 """
 
@@ -20,7 +21,7 @@ from enum import Enum
 from .llm import openai_chat_completion
 from pydantic import BaseModel
 import tqdm
-from .prompt_configs import llama_3_8b_prompt_config, llama3_1_8b_prompt_config, gpt_4o_prompt_config, RefineResponse
+from .prompt_configs import llama3_1_8b_prompt_config, gpt_4o_prompt_config, RefineResponse
 import numpy as np
 
 ROOT_UCT_SCORE = 10_000
@@ -334,7 +335,6 @@ class MCTSr(BaseModel):
             node.add_child(child)
             self.self_evaluate(child)
             self.backpropagate(child)
-            print(child)
 
         return self.get_best_answer()
 
@@ -495,20 +495,24 @@ class MCTSrLlama318B(MCTSr):
                     max_tokens=self.max_tokens,
                 )
                 assert response.choices[0].message.content is not None
-                return int(response.choices[0].message.content)
+                content = response.choices[0].message.content.strip()
+
+                # Try to parse the entire content as an integer
+                try:
+                    return int(content)
+                except ValueError:
+                    # If that fails, try to extract the first integer from the string
+                    match = re.search(r'\d+', content)
+                    if match:
+                        return int(match.group())
+                    else:
+                        raise ValueError("No integer found in the response")
+
             except ValueError:
-                messages.extend(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": response.choices[0].message.content,
-                        },
-                        {
-                            "role": "user",
-                            "content": "Failed to parse reward as an integer.",
-                        },
-                    ]
-                )
+                messages.extend([
+                    {"role": "assistant", "content": response.choices[0].message.content},
+                    {"role": "user", "content": "Failed to parse reward as an integer. Please provide only an integer value."},
+                    ])
                 if attempt == 2:
                     raise
 
