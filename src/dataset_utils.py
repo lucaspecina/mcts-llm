@@ -1,49 +1,43 @@
-"""
-
-Utilities to load various datasets.
-
-Dataset dfs are expected to have the following columns:
-- question
-- answer
-
-"""
-
-import pandas as pd
-
-from datasets import load_dataset
 import json
 
+task_sets = {
+    'training': {
+        'challenges': 'arc-prize-2024/arc-agi_training_challenges.json',
+        'solutions': 'arc-prize-2024/arc-agi_training_solutions.json',
+    },
+    'evaluation': {
+        'challenges': 'arc-prize-2024/arc-agi_evaluation_challenges.json',
+        'solutions': 'arc-prize-2024/arc-agi_evaluation_solutions.json',
+    }
+}
 
-def load_jsonl(file_path):
-    data = []
-    with open(file_path, "r") as file:
-        for line in file:
-            data.append(json.loads(line))
-    return data
+def load_tasks_from_file(task_set):
+    with open(task_set['challenges'], "r") as tasks:
+        challenges = json.load(tasks)
 
+    with open(task_set['solutions'], "r") as tasks:
+        solutions = json.load(tasks)
 
-def load_aime(year: int | None = None) -> pd.DataFrame:
-    df = pd.read_csv("datasets/AIME_Dataset_1983_2024.csv")
-    df.rename(columns={"Question": "question", "Answer": "answer"}, inplace=True)
-    if year is not None:
-        df = df[df["Year"] == year]
+    return challenges, solutions
 
-    return df
+def json_task_to_string(challenge_tasks, task_id, test_input_index):
+    json_task = challenge_tasks[task_id]
+    final_output = "CHALLENGE\n"
+    train_tasks = json_task['train']
+    test_task = json_task['test']
 
+    final_output += "Training Examples\n"
+    for i, task in enumerate(train_tasks):
+        final_output += f"Example {i + 1}: Input\n["
+        for row in task['input']:
+            final_output += f"\n{str(row)},"
+        final_output += f"]\n\nExample {i + 1}: Output\n["
+        for row in task['output']:
+            final_output += f"\n{str(row)},"
+        final_output += "]\n\n"
 
-def load_gs8mk(year: int | None = None) -> pd.DataFrame:
-    data = load_jsonl("datasets/gs8mk-test.jsonl")
-    return pd.DataFrame(data)
-
-
-def load_gsm_hard() -> pd.DataFrame:
-    dataset = load_dataset("reasoning-machines/gsm-hard")
-    data = [
-        {
-            "question": dataset["train"][i]["input"],
-            "code": dataset["train"][i]["code"],
-            "answer": dataset["train"][i]["target"],
-        }
-        for i in range(len(dataset["train"]))
-    ]
-    return pd.DataFrame(data)
+    final_output += "Test\n["
+    for row in test_task[test_input_index]['input']:
+        final_output += f"\n{str(row)}"
+    final_output += "]"
+    return final_output

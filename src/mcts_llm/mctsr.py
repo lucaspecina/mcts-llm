@@ -328,13 +328,14 @@ class MCTSr(BaseModel):
             str: The best answer found by the MCTS algorithm.
         """
         self.initialize()
-        for _ in tqdm.tqdm(range(self.max_rollouts)):
+        for i in tqdm.tqdm(range(self.max_rollouts)):
             node = self.select_node()
             self.self_evaluate(node)
             child = self.self_refine(node)
             node.add_child(child)
             self.self_evaluate(child)
             self.backpropagate(child)
+            print("-"*10 + f"Rollout {i} complete (Q={child.Q:.2f})\n{child.answer}")
 
         return self.get_best_answer()
 
