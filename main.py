@@ -56,9 +56,8 @@ def main(model, task_id, max_rollouts, max_tokens, debug=False):
     else:
         raise ValueError(f"Model {model} not supported")
     
-    print_tree(mctsr.root)
-
     mctsr.run()
+    mctsr.print()
     print("\nFINAL ANSWER:")
     print(mctsr.get_best_answer())
 

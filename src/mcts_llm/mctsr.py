@@ -328,6 +328,7 @@ class MCTSr(BaseModel):
             str: The best answer found by the MCTS algorithm.
         """
         self.initialize()
+
         for i in tqdm.tqdm(range(self.max_rollouts)):
             node = self.select_node()
             self.self_evaluate(node)
@@ -335,7 +336,7 @@ class MCTSr(BaseModel):
             node.add_child(child)
             self.self_evaluate(child)
             self.backpropagate(child)
-            print("-"*10 + f"Rollout {i} complete (Q={child.Q:.2f})\n{child.answer}")
+            print("="*30 + f"\nRollout {i} complete (Q={child.Q:.2f})\n{child.answer}")
 
         return self.get_best_answer()
 
@@ -667,21 +668,21 @@ class MCTSrGPT4o(MCTSr):
                 if attempt == 2:
                     raise
 
-
-def print_tree(node: MCTSNode | None, level: int = 0):
+def print_tree(node: MCTSNode | None, level: int = 0, prefix: str = ""):
     """
     Recursively prints the tree structure starting from the given node.
 
     Args:
         node (MCTSNode | None): The starting node of the tree.
         level (int): The current level of the tree (used for indentation).
+        prefix (str): The prefix to use for the current line.
     """
     if node is None:
         return
-    indent = " " * level * 2
-    node_str = repr(node)
-    for line in node_str.split("\n"):
-        print(indent + line)
-    for child in node.children:
-        print_tree(child, level + 1)
-
+    
+    print(f"{prefix}{'└── ' if level > 0 else ''}Q: {node.Q:.2f}, visits: {node.visits}")
+    
+    for i, child in enumerate(node.children):
+        is_last = (i == len(node.children) - 1)
+        new_prefix = prefix + ('    ' if level == 0 or is_last else '│   ')
+        print_tree(child, level + 1, new_prefix)
